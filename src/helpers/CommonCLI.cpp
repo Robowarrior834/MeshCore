@@ -90,7 +90,8 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     file.read((uint8_t *)&_prefs->adc_multiplier, sizeof(_prefs->adc_multiplier));                 // 166
     file.read((uint8_t *)_prefs->owner_info, sizeof(_prefs->owner_info));                          // 170
     file.read((uint8_t *)&_prefs->rx_boosted_gain, sizeof(_prefs->rx_boosted_gain));              // 290
-    // next: 291
+    file.read((uint8_t *)&_prefs->radio_fem_rxgain, sizeof(_prefs->radio_fem_rxgain));            // 291
+    // next: 292
 
     // sanitise bad pref values
     _prefs->rx_delay_base = constrain(_prefs->rx_delay_base, 0, 20.0f);
@@ -182,7 +183,6 @@ void CommonCLI::savePrefs(FILESYSTEM* fs) {
     file.write((uint8_t *)&_prefs->adc_multiplier, sizeof(_prefs->adc_multiplier));                 // 166
     file.write((uint8_t *)_prefs->owner_info, sizeof(_prefs->owner_info));                          // 170
     file.write((uint8_t *)&_prefs->rx_boosted_gain, sizeof(_prefs->rx_boosted_gain));              // 290
-    // next: 291
     file.write((uint8_t *)&_prefs->radio_fem_rxgain, sizeof(_prefs->radio_fem_rxgain));            // 291
     // next: 292
 
@@ -522,279 +522,279 @@ void CommonCLI::handleSetCmd(uint32_t sender_timestamp, char* command, char* rep
       sprintf(reply, "OK - %d.%d%%", a_int, a_frac);
     }
   } else if (memcmp(config, "af ", 3) == 0) {
-        _prefs->airtime_factor = atof(&config[3]);
-        savePrefs();
-        strcpy(reply, "OK");
-      } else if (memcmp(config, "int.thresh ", 11) == 0) {
-        _prefs->interference_threshold = atoi(&config[11]);
-        savePrefs();
-        strcpy(reply, "OK");
-      } else if (memcmp(config, "agc.reset.interval ", 19) == 0) {
-        _prefs->agc_reset_interval = atoi(&config[19]) / 4;
-        savePrefs();
-        sprintf(reply, "OK - interval rounded to %d", ((uint32_t) _prefs->agc_reset_interval) * 4);
-      } else if (memcmp(config, "multi.acks ", 11) == 0) {
-        _prefs->multi_acks = atoi(&config[11]);
-        savePrefs();
-        strcpy(reply, "OK");
-      } else if (memcmp(config, "allow.read.only ", 16) == 0) {
-        _prefs->allow_read_only = memcmp(&config[16], "on", 2) == 0;
-        savePrefs();
-        strcpy(reply, "OK");
-      } else if (memcmp(config, "flood.advert.interval ", 22) == 0) {
-        int hours = _atoi(&config[22]);
-        if ((hours > 0 && hours < 3) || (hours > 168)) {
-          strcpy(reply, "Error: interval range is 3-168 hours");
-        } else {
-          _prefs->flood_advert_interval = (uint8_t)(hours);
-          _callbacks->updateFloodAdvertTimer();
-          savePrefs();
-          strcpy(reply, "OK");
-        }
-      } else if (memcmp(config, "advert.interval ", 16) == 0) {
-        int mins = _atoi(&config[16]);
-        if ((mins > 0 && mins < MIN_LOCAL_ADVERT_INTERVAL) || (mins > 240)) {
-          sprintf(reply, "Error: interval range is %d-240 minutes", MIN_LOCAL_ADVERT_INTERVAL);
-        } else {
-          _prefs->advert_interval = (uint8_t)(mins / 2);
-          _callbacks->updateAdvertTimer();
-          savePrefs();
-          strcpy(reply, "OK");
-        }
-      } else if (memcmp(config, "guest.password ", 15) == 0) {
-        StrHelper::strncpy(_prefs->guest_password, &config[15], sizeof(_prefs->guest_password));
-        savePrefs();
-        strcpy(reply, "OK");
-      } else if (memcmp(config, "prv.key ", 8) == 0) {
-        uint8_t prv_key[PRV_KEY_SIZE];
-        bool success = mesh::Utils::fromHex(prv_key, PRV_KEY_SIZE, &config[8]);
-        // only allow rekey if key is valid
-        if (success && mesh::LocalIdentity::validatePrivateKey(prv_key)) {
-          mesh::LocalIdentity new_id;
-          new_id.readFrom(prv_key, PRV_KEY_SIZE);
-          _callbacks->saveIdentity(new_id);
-          strcpy(reply, "OK, reboot to apply! New pubkey: ");
-          mesh::Utils::toHex(&reply[33], new_id.pub_key, PUB_KEY_SIZE);
-        } else {
-          strcpy(reply, "Error, bad key");
-        }
-      } else if (memcmp(config, "name ", 5) == 0) {
-        if (isValidName(&config[5])) {
-          StrHelper::strncpy(_prefs->node_name, &config[5], sizeof(_prefs->node_name));
-          savePrefs();
-          strcpy(reply, "OK");
-        } else {
-          strcpy(reply, "Error, bad chars");
-        }
-      } else if (memcmp(config, "repeat ", 7) == 0) {
-        _prefs->disable_fwd = memcmp(&config[7], "off", 3) == 0;
-        savePrefs();
-        strcpy(reply, _prefs->disable_fwd ? "OK - repeat is now OFF" : "OK - repeat is now ON");
+    _prefs->airtime_factor = atof(&config[3]);
+    savePrefs();
+    strcpy(reply, "OK");
+  } else if (memcmp(config, "int.thresh ", 11) == 0) {
+    _prefs->interference_threshold = atoi(&config[11]);
+    savePrefs();
+    strcpy(reply, "OK");
+  } else if (memcmp(config, "agc.reset.interval ", 19) == 0) {
+    _prefs->agc_reset_interval = atoi(&config[19]) / 4;
+    savePrefs();
+    sprintf(reply, "OK - interval rounded to %d", ((uint32_t) _prefs->agc_reset_interval) * 4);
+  } else if (memcmp(config, "multi.acks ", 11) == 0) {
+    _prefs->multi_acks = atoi(&config[11]);
+    savePrefs();
+    strcpy(reply, "OK");
+  } else if (memcmp(config, "allow.read.only ", 16) == 0) {
+    _prefs->allow_read_only = memcmp(&config[16], "on", 2) == 0;
+    savePrefs();
+    strcpy(reply, "OK");
+  } else if (memcmp(config, "flood.advert.interval ", 22) == 0) {
+    int hours = _atoi(&config[22]);
+    if ((hours > 0 && hours < 3) || (hours > 168)) {
+      strcpy(reply, "Error: interval range is 3-168 hours");
+    } else {
+      _prefs->flood_advert_interval = (uint8_t)(hours);
+      _callbacks->updateFloodAdvertTimer();
+      savePrefs();
+      strcpy(reply, "OK");
+    }
+  } else if (memcmp(config, "advert.interval ", 16) == 0) {
+    int mins = _atoi(&config[16]);
+    if ((mins > 0 && mins < MIN_LOCAL_ADVERT_INTERVAL) || (mins > 240)) {
+      sprintf(reply, "Error: interval range is %d-240 minutes", MIN_LOCAL_ADVERT_INTERVAL);
+    } else {
+      _prefs->advert_interval = (uint8_t)(mins / 2);
+      _callbacks->updateAdvertTimer();
+      savePrefs();
+      strcpy(reply, "OK");
+    }
+  } else if (memcmp(config, "guest.password ", 15) == 0) {
+    StrHelper::strncpy(_prefs->guest_password, &config[15], sizeof(_prefs->guest_password));
+    savePrefs();
+    strcpy(reply, "OK");
+  } else if (memcmp(config, "prv.key ", 8) == 0) {
+    uint8_t prv_key[PRV_KEY_SIZE];
+    bool success = mesh::Utils::fromHex(prv_key, PRV_KEY_SIZE, &config[8]);
+    // only allow rekey if key is valid
+    if (success && mesh::LocalIdentity::validatePrivateKey(prv_key)) {
+      mesh::LocalIdentity new_id;
+      new_id.readFrom(prv_key, PRV_KEY_SIZE);
+      _callbacks->saveIdentity(new_id);
+      strcpy(reply, "OK, reboot to apply! New pubkey: ");
+      mesh::Utils::toHex(&reply[33], new_id.pub_key, PUB_KEY_SIZE);
+    } else {
+      strcpy(reply, "Error, bad key");
+    }
+  } else if (memcmp(config, "name ", 5) == 0) {
+    if (isValidName(&config[5])) {
+      StrHelper::strncpy(_prefs->node_name, &config[5], sizeof(_prefs->node_name));
+      savePrefs();
+      strcpy(reply, "OK");
+    } else {
+      strcpy(reply, "Error, bad chars");
+    }
+  } else if (memcmp(config, "repeat ", 7) == 0) {
+    _prefs->disable_fwd = memcmp(&config[7], "off", 3) == 0;
+    savePrefs();
+    strcpy(reply, _prefs->disable_fwd ? "OK - repeat is now OFF" : "OK - repeat is now ON");
 #if defined(USE_SX1262) || defined(USE_SX1268)
   } else if (memcmp(config, "radio.rxgain ", 13) == 0) {
-        _prefs->rx_boosted_gain = memcmp(&config[13], "on", 2) == 0;
-        strcpy(reply, "OK");
-        savePrefs();
-        _callbacks->setRxBoostedGain(_prefs->rx_boosted_gain);
+    _prefs->rx_boosted_gain = memcmp(&config[13], "on", 2) == 0;
+    strcpy(reply, "OK");
+    savePrefs();
+    _callbacks->setRxBoostedGain(_prefs->rx_boosted_gain);
 #endif
-      } else if (memcmp(config, "radio.fem.rxgain ", 17) == 0) {
-        if (!_board->canControlLoRaFemLna()) {
-          strcpy(reply, "Error: unsupported by this board");
-        } else if (memcmp(&config[17], "on", 2) == 0) {
-          if (_board->setLoRaFemLnaEnabled(true)) {
-            _prefs->radio_fem_rxgain = 1;
-            savePrefs();
-            strcpy(reply, "OK - LoRa FEM RX gain on");
-          } else {
-            strcpy(reply, "Error: failed to apply LoRa FEM RX gain");
-          }
-        } else if (memcmp(&config[17], "off", 3) == 0) {
-          if (_board->setLoRaFemLnaEnabled(false)) {
-            _prefs->radio_fem_rxgain = 0;
-            savePrefs();
-            strcpy(reply, "OK - LoRa FEM RX gain off");
-          } else {
-            strcpy(reply, "Error: failed to apply LoRa FEM RX gain");
-          }
-        } else {
-          strcpy(reply, "Error: state must be on or off");
-        }
-      } else if (memcmp(config, "radio ", 6) == 0) {
-        strcpy(tmp, &config[6]);
-        const char *parts[4];
-        int num = mesh::Utils::parseTextParts(tmp, parts, 4);
-        float freq  = num > 0 ? strtof(parts[0], nullptr) : 0.0f;
-        float bw    = num > 1 ? strtof(parts[1], nullptr) : 0.0f;
-        uint8_t sf  = num > 2 ? atoi(parts[2]) : 0;
-        uint8_t cr  = num > 3 ? atoi(parts[3]) : 0;
+  } else if (memcmp(config, "radio.fem.rxgain ", 17) == 0) {
+    if (!_board->canControlLoRaFemLna()) {
+      strcpy(reply, "Error: unsupported");
+    } else if (memcmp(&config[17], "on", 2) == 0) {
+      if (_board->setLoRaFemLnaEnabled(true)) {
+        _prefs->radio_fem_rxgain = 1;
+        savePrefs();
+        strcpy(reply, "OK - LoRa FEM RX gain on");
+      } else {
+        strcpy(reply, "Error: failed to apply LoRa FEM RX gain");
+      }
+    } else if (memcmp(&config[17], "off", 3) == 0) {
+      if (_board->setLoRaFemLnaEnabled(false)) {
+        _prefs->radio_fem_rxgain = 0;
+        savePrefs();
+        strcpy(reply, "OK - LoRa FEM RX gain off");
+      } else {
+        strcpy(reply, "Error: failed to apply LoRa FEM RX gain");
+      }
+    } else {
+      strcpy(reply, "Error: state must be on or off");
+    }
+  } else if (memcmp(config, "radio ", 6) == 0) {
+    strcpy(tmp, &config[6]);
+    const char *parts[4];
+    int num = mesh::Utils::parseTextParts(tmp, parts, 4);
+    float freq  = num > 0 ? strtof(parts[0], nullptr) : 0.0f;
+    float bw    = num > 1 ? strtof(parts[1], nullptr) : 0.0f;
+    uint8_t sf  = num > 2 ? atoi(parts[2]) : 0;
+    uint8_t cr  = num > 3 ? atoi(parts[3]) : 0;
     if (freq >= 150.0f && freq <= 2500.0f && sf >= 5 && sf <= 12 && cr >= 5 && cr <= 8 && bw >= 7.0f && bw <= 500.0f) {
-          _prefs->sf = sf;
-          _prefs->cr = cr;
-          _prefs->freq = freq;
-          _prefs->bw = bw;
-          _callbacks->savePrefs();
-          strcpy(reply, "OK - reboot to apply");
-        } else {
-          strcpy(reply, "Error, invalid radio params");
-        }
-      } else if (memcmp(config, "lat ", 4) == 0) {
-        _prefs->node_lat = atof(&config[4]);
-        savePrefs();
-        strcpy(reply, "OK");
-      } else if (memcmp(config, "lon ", 4) == 0) {
-        _prefs->node_lon = atof(&config[4]);
-        savePrefs();
-        strcpy(reply, "OK");
-      } else if (memcmp(config, "rxdelay ", 8) == 0) {
-        float db = atof(&config[8]);
-        if (db >= 0) {
-          _prefs->rx_delay_base = db;
-          savePrefs();
-          strcpy(reply, "OK");
-        } else {
-          strcpy(reply, "Error, cannot be negative");
-        }
-      } else if (memcmp(config, "txdelay ", 8) == 0) {
-        float f = atof(&config[8]);
-        if (f >= 0) {
-          _prefs->tx_delay_factor = f;
-          savePrefs();
-          strcpy(reply, "OK");
-        } else {
-          strcpy(reply, "Error, cannot be negative");
-        }
-      } else if (memcmp(config, "flood.max ", 10) == 0) {
-        uint8_t m = atoi(&config[10]);
-        if (m <= 64) {
-          _prefs->flood_max = m;
-          savePrefs();
-          strcpy(reply, "OK");
-        } else {
-          strcpy(reply, "Error, max 64");
-        }
-      } else if (memcmp(config, "direct.txdelay ", 15) == 0) {
-        float f = atof(&config[15]);
-        if (f >= 0) {
-          _prefs->direct_tx_delay_factor = f;
-          savePrefs();
-          strcpy(reply, "OK");
-        } else {
-          strcpy(reply, "Error, cannot be negative");
-        }
-      } else if (memcmp(config, "owner.info ", 11) == 0) {
-        config += 11;
-        char *dp = _prefs->owner_info;
-        while (*config && dp - _prefs->owner_info < sizeof(_prefs->owner_info)-1) {
-          *dp++ = (*config == '|') ? '\n' : *config;    // translate '|' to newline chars
-          config++;
-        }
-        *dp = 0;
-        savePrefs();
-        strcpy(reply, "OK");
-      } else if (memcmp(config, "path.hash.mode ", 15) == 0) {
-        config += 15;
-        uint8_t mode = atoi(config);
-        if (mode < 3) {
-          _prefs->path_hash_mode = mode;
-          savePrefs();
-          strcpy(reply, "OK");
-        } else {
-          strcpy(reply, "Error, must be 0,1, or 2");
-        }
-      } else if (memcmp(config, "loop.detect ", 12) == 0) {
-        config += 12;
-        uint8_t mode;
-        if (memcmp(config, "off", 3) == 0) {
-          mode = LOOP_DETECT_OFF;
-        } else if (memcmp(config, "minimal", 7) == 0) {
-          mode = LOOP_DETECT_MINIMAL;
-        } else if (memcmp(config, "moderate", 8) == 0) {
-          mode = LOOP_DETECT_MODERATE;
-        } else if (memcmp(config, "strict", 6) == 0) {
-          mode = LOOP_DETECT_STRICT;
-        } else {
-          mode = 0xFF;
-          strcpy(reply, "Error, must be: off, minimal, moderate, or strict");
-        }
-        if (mode != 0xFF) {
-          _prefs->loop_detect = mode;
-          savePrefs();
-          strcpy(reply, "OK");
-        }
-      } else if (memcmp(config, "tx ", 3) == 0) {
-        _prefs->tx_power_dbm = atoi(&config[3]);
-        savePrefs();
-        _callbacks->setTxPower(_prefs->tx_power_dbm);
-        strcpy(reply, "OK");
-      } else if (sender_timestamp == 0 && memcmp(config, "freq ", 5) == 0) {
-        _prefs->freq = atof(&config[5]);
-        savePrefs();
-        strcpy(reply, "OK - reboot to apply");
+      _prefs->sf = sf;
+      _prefs->cr = cr;
+      _prefs->freq = freq;
+      _prefs->bw = bw;
+      _callbacks->savePrefs();
+      strcpy(reply, "OK - reboot to apply");
+    } else {
+      strcpy(reply, "Error, invalid radio params");
+    }
+  } else if (memcmp(config, "lat ", 4) == 0) {
+    _prefs->node_lat = atof(&config[4]);
+    savePrefs();
+    strcpy(reply, "OK");
+  } else if (memcmp(config, "lon ", 4) == 0) {
+    _prefs->node_lon = atof(&config[4]);
+    savePrefs();
+    strcpy(reply, "OK");
+  } else if (memcmp(config, "rxdelay ", 8) == 0) {
+    float db = atof(&config[8]);
+    if (db >= 0) {
+      _prefs->rx_delay_base = db;
+      savePrefs();
+      strcpy(reply, "OK");
+    } else {
+      strcpy(reply, "Error, cannot be negative");
+    }
+  } else if (memcmp(config, "txdelay ", 8) == 0) {
+    float f = atof(&config[8]);
+    if (f >= 0) {
+      _prefs->tx_delay_factor = f;
+      savePrefs();
+      strcpy(reply, "OK");
+    } else {
+      strcpy(reply, "Error, cannot be negative");
+    }
+  } else if (memcmp(config, "flood.max ", 10) == 0) {
+    uint8_t m = atoi(&config[10]);
+    if (m <= 64) {
+      _prefs->flood_max = m;
+      savePrefs();
+      strcpy(reply, "OK");
+    } else {
+      strcpy(reply, "Error, max 64");
+    }
+  } else if (memcmp(config, "direct.txdelay ", 15) == 0) {
+    float f = atof(&config[15]);
+    if (f >= 0) {
+      _prefs->direct_tx_delay_factor = f;
+      savePrefs();
+      strcpy(reply, "OK");
+    } else {
+      strcpy(reply, "Error, cannot be negative");
+    }
+  } else if (memcmp(config, "owner.info ", 11) == 0) {
+    config += 11;
+    char *dp = _prefs->owner_info;
+    while (*config && dp - _prefs->owner_info < sizeof(_prefs->owner_info)-1) {
+      *dp++ = (*config == '|') ? '\n' : *config;    // translate '|' to newline chars
+      config++;
+    }
+    *dp = 0;
+    savePrefs();
+    strcpy(reply, "OK");
+  } else if (memcmp(config, "path.hash.mode ", 15) == 0) {
+    config += 15;
+    uint8_t mode = atoi(config);
+    if (mode < 3) {
+      _prefs->path_hash_mode = mode;
+      savePrefs();
+      strcpy(reply, "OK");
+    } else {
+      strcpy(reply, "Error, must be 0,1, or 2");
+    }
+  } else if (memcmp(config, "loop.detect ", 12) == 0) {
+    config += 12;
+    uint8_t mode;
+    if (memcmp(config, "off", 3) == 0) {
+      mode = LOOP_DETECT_OFF;
+    } else if (memcmp(config, "minimal", 7) == 0) {
+      mode = LOOP_DETECT_MINIMAL;
+    } else if (memcmp(config, "moderate", 8) == 0) {
+      mode = LOOP_DETECT_MODERATE;
+    } else if (memcmp(config, "strict", 6) == 0) {
+      mode = LOOP_DETECT_STRICT;
+    } else {
+      mode = 0xFF;
+      strcpy(reply, "Error, must be: off, minimal, moderate, or strict");
+    }
+    if (mode != 0xFF) {
+      _prefs->loop_detect = mode;
+      savePrefs();
+      strcpy(reply, "OK");
+    }
+  } else if (memcmp(config, "tx ", 3) == 0) {
+    _prefs->tx_power_dbm = atoi(&config[3]);
+    savePrefs();
+    _callbacks->setTxPower(_prefs->tx_power_dbm);
+    strcpy(reply, "OK");
+  } else if (sender_timestamp == 0 && memcmp(config, "freq ", 5) == 0) {
+    _prefs->freq = atof(&config[5]);
+    savePrefs();
+    strcpy(reply, "OK - reboot to apply");
 #ifdef WITH_BRIDGE
-      } else if (memcmp(config, "bridge.enabled ", 15) == 0) {
-        _prefs->bridge_enabled = memcmp(&config[15], "on", 2) == 0;
-        _callbacks->setBridgeState(_prefs->bridge_enabled);
-        savePrefs();
-        strcpy(reply, "OK");
-      } else if (memcmp(config, "bridge.delay ", 13) == 0) {
-        int delay = _atoi(&config[13]);
-        if (delay >= 0 && delay <= 10000) {
-          _prefs->bridge_delay = (uint16_t)delay;
-          savePrefs();
-          strcpy(reply, "OK");
-        } else {
-          strcpy(reply, "Error: delay must be between 0-10000 ms");
-        }
-      } else if (memcmp(config, "bridge.source ", 14) == 0) {
-        _prefs->bridge_pkt_src = memcmp(&config[14], "rx", 2) == 0;
-        savePrefs();
-        strcpy(reply, "OK");
+  } else if (memcmp(config, "bridge.enabled ", 15) == 0) {
+    _prefs->bridge_enabled = memcmp(&config[15], "on", 2) == 0;
+    _callbacks->setBridgeState(_prefs->bridge_enabled);
+    savePrefs();
+    strcpy(reply, "OK");
+  } else if (memcmp(config, "bridge.delay ", 13) == 0) {
+    int delay = _atoi(&config[13]);
+    if (delay >= 0 && delay <= 10000) {
+      _prefs->bridge_delay = (uint16_t)delay;
+      savePrefs();
+      strcpy(reply, "OK");
+    } else {
+      strcpy(reply, "Error: delay must be between 0-10000 ms");
+    }
+  } else if (memcmp(config, "bridge.source ", 14) == 0) {
+    _prefs->bridge_pkt_src = memcmp(&config[14], "rx", 2) == 0;
+    savePrefs();
+    strcpy(reply, "OK");
 #endif
 #ifdef WITH_RS232_BRIDGE
-      } else if (memcmp(config, "bridge.baud ", 12) == 0) {
-        uint32_t baud = atoi(&config[12]);
-        if (baud >= 9600 && baud <= BRIDGE_MAX_BAUD) {
-          _prefs->bridge_baud = (uint32_t)baud;
-          _callbacks->restartBridge();
-          savePrefs();
-          strcpy(reply, "OK");
-        } else {
-          sprintf(reply, "Error: baud rate must be between 9600-%d",BRIDGE_MAX_BAUD);
-        }
+  } else if (memcmp(config, "bridge.baud ", 12) == 0) {
+    uint32_t baud = atoi(&config[12]);
+    if (baud >= 9600 && baud <= BRIDGE_MAX_BAUD) {
+      _prefs->bridge_baud = (uint32_t)baud;
+      _callbacks->restartBridge();
+      savePrefs();
+      strcpy(reply, "OK");
+    } else {
+      sprintf(reply, "Error: baud rate must be between 9600-%d",BRIDGE_MAX_BAUD);
+    }
 #endif
 #ifdef WITH_ESPNOW_BRIDGE
-      } else if (memcmp(config, "bridge.channel ", 15) == 0) {
-        int ch = atoi(&config[15]);
-        if (ch > 0 && ch < 15) {
-          _prefs->bridge_channel = (uint8_t)ch;
-          _callbacks->restartBridge();
-          savePrefs();
-          strcpy(reply, "OK");
-        } else {
-          strcpy(reply, "Error: channel must be between 1-14");
-        }
-      } else if (memcmp(config, "bridge.secret ", 14) == 0) {
-        StrHelper::strncpy(_prefs->bridge_secret, &config[14], sizeof(_prefs->bridge_secret));
-        _callbacks->restartBridge();
-        savePrefs();
-        strcpy(reply, "OK");
+  } else if (memcmp(config, "bridge.channel ", 15) == 0) {
+    int ch = atoi(&config[15]);
+    if (ch > 0 && ch < 15) {
+      _prefs->bridge_channel = (uint8_t)ch;
+      _callbacks->restartBridge();
+      savePrefs();
+      strcpy(reply, "OK");
+    } else {
+      strcpy(reply, "Error: channel must be between 1-14");
+    }
+  } else if (memcmp(config, "bridge.secret ", 14) == 0) {
+    StrHelper::strncpy(_prefs->bridge_secret, &config[14], sizeof(_prefs->bridge_secret));
+    _callbacks->restartBridge();
+    savePrefs();
+    strcpy(reply, "OK");
 #endif
-      } else if (memcmp(config, "adc.multiplier ", 15) == 0) {
-        _prefs->adc_multiplier = atof(&config[15]);
-        if (_board->setAdcMultiplier(_prefs->adc_multiplier)) {
-          savePrefs();
-          if (_prefs->adc_multiplier == 0.0f) {
-            strcpy(reply, "OK - using default board multiplier");
-          } else {
-            sprintf(reply, "OK - multiplier set to %.3f", _prefs->adc_multiplier);
-          }
-        } else {
-          _prefs->adc_multiplier = 0.0f;
-          strcpy(reply, "Error: unsupported by this board");
-        };
+  } else if (memcmp(config, "adc.multiplier ", 15) == 0) {
+    _prefs->adc_multiplier = atof(&config[15]);
+    if (_board->setAdcMultiplier(_prefs->adc_multiplier)) {
+      savePrefs();
+      if (_prefs->adc_multiplier == 0.0f) {
+        strcpy(reply, "OK - using default board multiplier");
       } else {
-        sprintf(reply, "unknown config: %s", config);
+        sprintf(reply, "OK - multiplier set to %.3f", _prefs->adc_multiplier);
       }
+    } else {
+      _prefs->adc_multiplier = 0.0f;
+      strcpy(reply, "Error: unsupported");
+    };
+  } else {
+    strcpy(reply, "unknown config: ");
+  }
 }
 
 void CommonCLI::handleGetCmd(uint32_t sender_timestamp, char* command, char* reply) {
@@ -837,6 +837,12 @@ void CommonCLI::handleGetCmd(uint32_t sender_timestamp, char* command, char* rep
   } else if (memcmp(config, "radio.rxgain", 12) == 0) {
     sprintf(reply, "> %s", _prefs->rx_boosted_gain ? "on" : "off");
 #endif
+  } else if (memcmp(config, "radio.fem.rxgain", 16) == 0) {
+    if (!_board->canControlLoRaFemLna()) {
+      strcpy(reply, "Error: unsupported");
+    } else {
+      sprintf(reply, "> %s", _board->isLoRaFemLnaEnabled() ? "on" : "off");
+    }
   } else if (memcmp(config, "radio", 5) == 0) {
     char freq[16], bw[16];
     strcpy(freq, StrHelper::ftoa(_prefs->freq));
@@ -868,9 +874,9 @@ void CommonCLI::handleGetCmd(uint32_t sender_timestamp, char* command, char* rep
       strcpy(reply, "> minimal");
     } else if (_prefs->loop_detect == LOOP_DETECT_MODERATE) {
       strcpy(reply, "> moderate");
-      } else {
+    } else {
       strcpy(reply, "> strict");
-      }
+    }
   } else if (memcmp(config, "tx", 2) == 0 && (config[2] == 0 || config[2] == ' ')) {
     sprintf(reply, "> %d", (int32_t) _prefs->tx_power_dbm);
   } else if (memcmp(config, "freq", 4) == 0) {
@@ -917,12 +923,12 @@ void CommonCLI::handleGetCmd(uint32_t sender_timestamp, char* command, char* rep
           strcpy(reply, "> unknown");
       }
   #else
-      strcpy(reply, "ERROR: unsupported");
+      strcpy(reply, "Error: unsupported");
   #endif
   } else if (memcmp(config, "adc.multiplier", 14) == 0) {
     float adc_mult = _board->getAdcMultiplier();
     if (adc_mult == 0.0f) {
-      strcpy(reply, "Error: unsupported by this board");
+      strcpy(reply, "Error: unsupported");
     } else {
       sprintf(reply, "> %.3f", adc_mult);
     }
