@@ -40,7 +40,9 @@ void TBeam1WBoard::onAfterTransmit() {
   setFanEnabled(true);
   _fan_off_millis = millis() + 10000;
 }
-
+void TBeam1WBoard::loop() {
+  updateFan();
+}
 void TBeam1WBoard::updateFan() {
   if (_fan_off_millis > 0 && (long)(millis() - _fan_off_millis) >= 0) {
     setFanEnabled(false);

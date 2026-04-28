@@ -109,11 +109,9 @@ void loop() {
 
   the_mesh.loop();
   sensors.loop();
+  board.loop();
 #ifdef DISPLAY_CLASS
   ui_task.loop();
 #endif
   rtc_clock.tick();
-#ifdef P_FAN_CTRL
-  update_fan_control();
-#endif
 }
