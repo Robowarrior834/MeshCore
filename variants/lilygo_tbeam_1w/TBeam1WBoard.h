@@ -34,7 +34,7 @@ private:
 
 public:
   void begin();
-  void loop();
+  void loop() override;
   void onBeforeTransmit() override;
   void onAfterTransmit() override;
   uint16_t getBattMilliVolts() override;
