@@ -16,6 +16,7 @@ class E290Display : public DisplayDriver {
   RefCountedDigitalPin* _periph_power;
   CRC32 display_crc;
   uint32_t last_display_crc_value = 0;
+  uint32_t _lastDeepClearMillis = 0;
 
 public:
   E290Display(RefCountedDigitalPin* periph_power = NULL) : DisplayDriver(296, 128), _periph_power(periph_power) {}
@@ -25,6 +26,7 @@ public:
   void turnOn() override;
   void turnOff() override;
   void clear() override;
+  void deepClear() override;
   void startFrame(Color bkg = DARK) override;
   void setTextSize(int sz) override;
   void setColor(Color c) override;

@@ -51,6 +51,7 @@ bool E213Display::begin() {
 
   _init = true;
   _isOn = true;
+  _lastDeepClearMillis = millis();
 
   clear();
   display->fastmodeOn(); // Enable fast mode for quicker (partial) updates
@@ -108,7 +109,22 @@ void E213Display::clear() {
   display->clear();
 }
 
+void E213Display::deepClear() {
+  display->fastmodeOff();
+  for (int i = 0; i < 5; i++) {
+    display->fillRect(0, 0, width(), height(), i % 2 == 0 ? BLACK : WHITE);
+    display->update();
+  }
+  display->fillRect(0, 0, width(), height(), WHITE);
+  display->update();
+  display->fastmodeOn();
+  _lastDeepClearMillis = millis();
+}
+
 void E213Display::startFrame(Color bkg) {
+  if (_lastDeepClearMillis > 0 && millis() - _lastDeepClearMillis >= 300000) {
+    deepClear();
+  }
   display_crc.reset();
 
   // Fill screen with white first to ensure clean background

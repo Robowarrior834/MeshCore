@@ -36,6 +36,7 @@ class GxEPDDisplay : public DisplayDriver {
   uint16_t _curr_color;
   CRC32 display_crc;
   int last_display_crc_value = 0;
+  uint32_t _lastDeepClearMillis = 0;
 
 public:
 #if defined(EINK_DISPLAY_MODEL)
@@ -50,6 +51,7 @@ public:
   void turnOn() override;
   void turnOff() override;
   void clear() override;
+  void deepClear() override;
   void startFrame(Color bkg = DARK) override;
   void setTextSize(int sz) override;
   void setColor(Color c) override;

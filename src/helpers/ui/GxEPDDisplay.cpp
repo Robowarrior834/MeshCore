@@ -24,10 +24,10 @@ bool GxEPDDisplay::begin() {
   display.init(115200, true, 2, false);
   display.setRotation(DISPLAY_ROTATION);
   setTextSize(1);  // Default to size 1
-  display.setPartialWindow(0, 0, display.width(), display.height());
 
   display.fillScreen(GxEPD_WHITE);
   display.display(true);
+  _lastDeepClearMillis = millis();
   #if DISP_BACKLIGHT
   digitalWrite(DISP_BACKLIGHT, LOW);
   pinMode(DISP_BACKLIGHT, OUTPUT);
@@ -61,7 +61,21 @@ void GxEPDDisplay::clear() {
   display_crc.reset();
 }
 
+void GxEPDDisplay::deepClear() {
+  display.setFullWindow();
+  for (int i = 0; i < 1; i++) {
+    display.fillScreen(i % 2 == 0 ? GxEPD_BLACK : GxEPD_WHITE);
+    display.display(false);  // full refresh
+  }
+  display.fillScreen(GxEPD_WHITE);
+  display.display(false);  // full refresh
+  _lastDeepClearMillis = millis();
+}
+
 void GxEPDDisplay::startFrame(Color bkg) {
+  if (_lastDeepClearMillis > 0 && millis() - _lastDeepClearMillis >= 300000) {
+    deepClear();
+  }
   display.fillScreen(GxEPD_WHITE);
   display.setTextColor(_curr_color = GxEPD_BLACK);
   display_crc.reset();
