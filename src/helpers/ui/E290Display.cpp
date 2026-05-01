@@ -76,7 +76,7 @@ void E290Display::deepClear() {
 }
 
 void E290Display::startFrame(Color bkg) {
-  if (_lastDeepClearMillis > 0 && millis() - _lastDeepClearMillis >= 300000) {
+  if (_lastDeepClearMillis > 0 && millis() - _lastDeepClearMillis >= 1800000) {
     deepClear();
   }
   display_crc.reset();

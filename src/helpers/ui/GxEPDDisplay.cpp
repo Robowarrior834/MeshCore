@@ -73,7 +73,7 @@ void GxEPDDisplay::deepClear() {
 }
 
 void GxEPDDisplay::startFrame(Color bkg) {
-  if (_lastDeepClearMillis > 0 && millis() - _lastDeepClearMillis >= 300000) {
+  if (_lastDeepClearMillis > 0 && millis() - _lastDeepClearMillis >= 1800000) {
     deepClear();
   }
   display.fillScreen(GxEPD_WHITE);

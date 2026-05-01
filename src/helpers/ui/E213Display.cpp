@@ -122,7 +122,7 @@ void E213Display::deepClear() {
 }
 
 void E213Display::startFrame(Color bkg) {
-  if (_lastDeepClearMillis > 0 && millis() - _lastDeepClearMillis >= 300000) {
+  if (_lastDeepClearMillis > 0 && millis() - _lastDeepClearMillis >= 1800000) {
     deepClear();
   }
   display_crc.reset();
