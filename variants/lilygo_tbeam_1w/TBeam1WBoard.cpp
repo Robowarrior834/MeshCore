@@ -23,6 +23,13 @@ void TBeam1WBoard::begin() {
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
 
+#ifdef PPS_LED_BLINK
+  // PPS pin with pull-down: floats low when GPS is off, pulses when GPS has fix
+  pinMode(PIN_GPS_PPS, INPUT_PULLDOWN);
+  _ppsState = digitalRead(PIN_GPS_PPS);
+  _lastPpsMillis = millis();
+#endif
+
   // Fan starts off; onAfterTransmit() enables it with a 30s cooldown timer
   pinMode(FAN_CTRL_PIN, OUTPUT);
   digitalWrite(FAN_CTRL_PIN, LOW);
@@ -30,18 +37,43 @@ void TBeam1WBoard::begin() {
 
 void TBeam1WBoard::onBeforeTransmit() {
   digitalWrite(SX126X_RXEN, LOW);  // disconnect LNA before PA ramps up
-  digitalWrite(LED_PIN, HIGH);
+#ifdef PPS_LED_BLINK
+  _isTransmitting = true;
+#endif
+  digitalWrite(LED_PIN, HIGH);  // TX indicator on
 }
 
 void TBeam1WBoard::onAfterTransmit() {
   digitalWrite(SX126X_RXEN, HIGH); // re-enable LNA immediately after TX
+#ifdef PPS_LED_BLINK
+  _isTransmitting = false;
+#else
   digitalWrite(LED_PIN, LOW);
+#endif
   // Keep fan running for 10s after TX
   setFanEnabled(true);
   _fan_off_millis = millis() + 10000;
 }
 void TBeam1WBoard::loop() {
   updateFan();
+#ifdef PPS_LED_BLINK
+  if (!_isTransmitting) {
+    int currentPps = digitalRead(PIN_GPS_PPS);
+    unsigned long now = millis();
+
+    // Update fix status if PPS state changes
+    if (currentPps != _ppsState) {
+      _ppsState = currentPps;
+      _lastPpsMillis = now;
+      _gpsHasFix = true;
+    }
+    // No PPS change in 2s = GPS off/no fix
+    if (now - _lastPpsMillis > 2000) _gpsHasFix = false;
+
+    // Blink LED with PPS if GPS has fix, else off
+    digitalWrite(LED_PIN, _gpsHasFix ? _ppsState : LOW);
+  }
+#endif
 }
 void TBeam1WBoard::updateFan() {
   if (_fan_off_millis > 0 && (long)(millis() - _fan_off_millis) >= 0) {

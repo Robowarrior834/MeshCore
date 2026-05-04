@@ -32,6 +32,13 @@ private:
   bool radio_powered = false;
   unsigned long _fan_off_millis = 0;  // 0 = no pending fan-off
 
+#ifdef PPS_LED_BLINK
+  int _ppsState = LOW;               // Current PPS pin state
+  unsigned long _lastPpsMillis = 0; // Last PPS state change time
+  bool _gpsHasFix = false;          // True if PPS is pulsing (GPS has fix)
+  bool _isTransmitting = false;     // True during radio transmission
+#endif
+
 public:
   void begin();
   void loop() override;
