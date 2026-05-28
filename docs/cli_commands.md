@@ -504,6 +504,8 @@ This document provides an overview of CLI commands that can be sent to MeshCore 
 
 **Default:** `0.5`
 
+**Note:** When multiple nearby repeaters all hear the same flood packet, each waits a random amount of time before retransmitting to avoid simultaneous collisions. This factor scales the size of that random window. Higher values reduce collision risk at the cost of added latency. `0` disables the window entirely.
+
 ---
 
 #### View or change the retransmit delay factor for direct traffic
@@ -516,6 +518,8 @@ This document provides an overview of CLI commands that can be sent to MeshCore 
 
 **Default:** `0.2`
 
+**Note:** Same collision-avoidance random window as `txdelay`, but applied to direct (non-flood, routed) traffic. The default is lower because direct packets are addressed to a specific next hop, so far fewer nodes compete to retransmit them.
+
 ---
 
 #### [Experimental] View or change the processing delay for received traffic
@@ -527,6 +531,8 @@ This document provides an overview of CLI commands that can be sent to MeshCore 
 - `value`: Receive delay base (0-20)
 
 **Default:** `0.0`
+
+**Note:** When enabled, repeaters that received a flood packet with a weak signal are held in a delay queue before processing, while those that received it with a strong signal process it immediately. This gives strong-signal paths forwarding priority. By the time weak-signal nodes process their copy, the packet may have already propagated and will be suppressed as a duplicate, reducing redundant retransmissions.
 
 ---
 
@@ -761,6 +767,47 @@ This document provides an overview of CLI commands that can be sent to MeshCore 
 **Parameters:**
 - `name`: Region name
 - `parent_name`: Parent region name (optional, defaults to wildcard)
+
+---
+
+#### Define region hierarchy (single line)
+**Usage:**
+- `region def <token> [<token> ...]`
+
+**Parameters (tokens):** Space-separated. A logical **cursor** starts at the wildcard `*`.
+
+- **`name`** — Create `name` as a child of the current cursor (equivalent to `region put name` with the cursor as parent). Cursor moves to `name`.
+- **`name|jump`** *(or `name,jump`)* — Create `name` as a child of the current cursor, then move the cursor to `jump` (must already exist on the node, or have been created earlier in this command). `jump` is **not** the parent of `name`; use this form to pop back up and start another branch.
+
+**Behavior:** Each created region defaults to flood-allowed (same as `region put`). The reply is the resulting region tree (same format as bare `region`); review it before running `region save` to persist. On error, the reply is `Err - ...` and any regions placed before the failure remain on the node, just like a partial chain of `region put`.
+
+**Existing regions:** `region def` does not clear the existing tree — if a name already exists, its parent is updated to the current cursor; otherwise a new region is created. To start from scratch, `region remove` the unwanted regions first.
+
+**Limits:** Repeater serial accepts one line up to **160 characters**. For larger trees, split across multiple `region def` commands; the cursor resets to `*` between commands, so lead the next command with `child|ancestor` to reposition. Each token splits at most once on `|` — `region def a|b|c|d` is not a flat-list shorthand; see the flat-list example below.
+
+**Example — linear chain** (each token becomes a child of the previous):
+```
+region def a b c d e
+region save
+```
+
+**Example — branched tree** (equivalent to `region put a`, `region put b a`, `region put c b`, `region put d c`, `region put e b`, `region put f e`):
+```
+region def a b c d|b e f
+region save
+```
+
+**Example — error and partial state:**
+```
+region def a b c|nope d
+```
+The reply is `Err - unknown jump: nope`. `a`, `b`, and `c` were placed before the failure; `d` was not. Run `region` to inspect, then re-run with a corrected jump or repair with `region remove` / `region put`.
+
+**Example — flat list** (each region a child of `*`). Use `|*` after each token to pop the cursor back to the root before the next token:
+```
+region def a|* b|* c|* d|* e|* f
+region save
+```
 
 ---
 
